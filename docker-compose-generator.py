@@ -38,7 +38,7 @@ def yaml_generator(client_amount):
                          "container_name": "server",
                          "image": "server:latest",
                          "entrypoint": "python3 /main.py",
-                         "enviroment": [
+                         "environment": [
                              "PYTHONUNBUFFERED=1",
                              "LOGGING_LEVEL=DEBUG"],
                          "networks": [
@@ -48,7 +48,7 @@ def yaml_generator(client_amount):
                  "networks":{
                      "testing_net":{
                          "ipam":{
-                             "dirver": "default",
+                             "driver": "default",
                               "config":[{"subnet":"172.25.125.0/24"}]
                               }
                             }
@@ -56,7 +56,7 @@ def yaml_generator(client_amount):
                 }
     for n in range(client_amount):
         client = f"client{n+1}"
-        yaml_dicc["services"][client] = {"container_name": client, "image": "client:latest", "entrypoint": "/client", "enviroment": [f"CLI_ID={n+1}", "CLI_LOG_LEVEL=DEBUG"], "networks":["testing_net"], "depends_on":["server"]}
+        yaml_dicc["services"][client] = {"container_name": client, "image": "client:latest", "entrypoint": "/client", "environment": [f"CLI_ID={n+1}", "CLI_LOG_LEVEL=DEBUG"], "networks":["testing_net"], "depends_on":["server"]}
     return yaml_dicc
 
 if __name__ == "__main__":

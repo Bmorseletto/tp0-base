@@ -4,7 +4,7 @@ services:
       container_name: server
       image: server:latest
       entrypoint: python3 /main.py
-      enviroment:
+      environment:
          - PYTHONUNBUFFERED=1
          - LOGGING_LEVEL=DEBUG
       networks:
@@ -13,7 +13,7 @@ services:
       container_name: client1
       image: client:latest
       entrypoint: /client
-      enviroment:
+      environment:
          - CLI_ID=1
          - CLI_LOG_LEVEL=DEBUG
       networks:
@@ -24,7 +24,7 @@ services:
       container_name: client2
       image: client:latest
       entrypoint: /client
-      enviroment:
+      environment:
          - CLI_ID=2
          - CLI_LOG_LEVEL=DEBUG
       networks:
@@ -34,6 +34,6 @@ services:
 networks:
    testing_net:
       ipam:
-         dirver: default
+         driver: default
          config:
                - subnet: 172.25.125.0/24
