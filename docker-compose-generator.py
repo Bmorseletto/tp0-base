@@ -44,7 +44,7 @@ def yaml_generator(client_amount):
                          "networks": [
                              "testing_net"],
                          "volumes": [
-                             "./config.yaml:/app/config.yaml"]
+                             "./server/config.ini:/app/config.ini"]
                             }
                         },
                  "networks":{
@@ -58,7 +58,7 @@ def yaml_generator(client_amount):
                 }
     for n in range(client_amount):
         client = f"client{n+1}"
-        yaml_dicc["services"][client] = {"container_name": client, "image": "client:latest", "entrypoint": "/client", "environment": [f"CLI_ID={n+1}", "CLI_LOG_LEVEL=DEBUG"], "networks":["testing_net"], "depends_on":["server"], "volumes": ["./config.yaml:/app/config.yaml"]}
+        yaml_dicc["services"][client] = {"container_name": client, "image": "client:latest", "entrypoint": "/client", "environment": [f"CLI_ID={n+1}", "CLI_LOG_LEVEL=DEBUG"], "networks":["testing_net"], "depends_on":["server"], "volumes": ["./client/config.yaml:/app/config.yaml"]}
     return yaml_dicc
 
 if __name__ == "__main__":
