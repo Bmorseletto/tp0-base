@@ -63,7 +63,7 @@ func (c *Client) StartClientLoop() {
 		select{
 		case <- ctx.Done():
 			print("closing client")
-			return
+			break
 		default:
 			if !send_message(){return}
 		}
