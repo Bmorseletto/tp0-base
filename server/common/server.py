@@ -23,8 +23,11 @@ class Server:
         """
 
         while self._loop:
-            client_sock = self.__accept_new_connection()
-            self.__handle_client_connection(client_sock)
+            try:
+                client_sock = self.__accept_new_connection()
+                self.__handle_client_connection(client_sock)
+            except OSError:
+                self._loop = False
 
     def __handle_shutdown(self,signal_number, stack_frame):
         print("closing loop")
@@ -64,6 +67,12 @@ class Server:
 
         # Connection arrived
         logging.info('action: accept_connections | result: in_progress')
-        c, addr = self._server_socket.accept()
-        logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
-        return c
+        try:
+            c, addr = self._server_socket.accept()
+            logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
+            return c
+        except OSError:
+            print("socket already closed")
+            raise OSError
+        
+        
