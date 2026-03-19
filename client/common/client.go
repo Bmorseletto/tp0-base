@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net"
 	"time"
-
+	"os/signal"
+	"syscall"
+	"context"
 	"github.com/op/go-logging"
 )
 
@@ -52,12 +54,26 @@ func (c *Client) createClientSocket() error {
 
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
+	ctx, stop := signal.NotifyContext(context.Background(),syscall.SIGTERM)
+	defer stop()
 	// There is an autoincremental msgID to identify every message sent
 	// Messages if the message amount threshold has not been surpassed
 	for msgID := 1; msgID <= c.config.LoopAmount; msgID++ {
 		// Create the connection the server in every loop iteration. Send an
-		c.createClientSocket()
+		select{
+		case <- ctx.Done():
+			print("closing client")
+		default:
+			if !send_message(){return}
+		}
+		
+	}
+	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
+}
 
+func (c *Client) send_message() (bool){
+	c.createClientSocket()
+		
 		// TODO: Modify the send to avoid short-write
 		fmt.Fprintf(
 			c.conn,
@@ -73,7 +89,7 @@ func (c *Client) StartClientLoop() {
 				c.config.ID,
 				err,
 			)
-			return
+			return false
 		}
 
 		log.Infof("action: receive_message | result: success | client_id: %v | msg: %v",
@@ -83,7 +99,5 @@ func (c *Client) StartClientLoop() {
 
 		// Wait a time between sending one message and the next one
 		time.Sleep(c.config.LoopPeriod)
-
-	}
-	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
+		return true
 }
