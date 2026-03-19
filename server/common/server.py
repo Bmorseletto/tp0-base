@@ -21,7 +21,7 @@ class Server:
         communication with a client. After client with communucation
         finishes, servers starts to accept new connections again
         """
-        
+
         while self._loop:
             client_sock = self.__accept_new_connection()
             self.__handle_client_connection(client_sock)
@@ -30,6 +30,7 @@ class Server:
         print("closing loop")
         self._loop = False
         print("closing socket")
+        self._server_socket.shutdown(socket.SHUT_RDWR)
         self._server_socket.close()
 
 
