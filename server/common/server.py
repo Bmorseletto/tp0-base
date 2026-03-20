@@ -30,9 +30,9 @@ class Server:
                 self._loop = False
 
     def __handle_shutdown(self,signal_number, stack_frame):
-        print("closing loop")
+        logging.info("closing loop")
         self._loop = False
-        print("closing socket")
+        logging.info("closing socket")
         self._server_socket.shutdown(socket.SHUT_RDWR)
         self._server_socket.close()
 
@@ -72,7 +72,6 @@ class Server:
             logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
             return c
         except OSError:
-            print("socket already closed")
             raise OSError
         
         
