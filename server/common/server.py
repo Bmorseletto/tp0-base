@@ -2,7 +2,16 @@ import socket
 import logging
 import signal
 import sys
-
+from common.utils import Bet
+from common.utils import store_bets
+CLIENT = "Client"
+NAME = "Name"
+LASTNAME = "LastName"
+DNI = "Dni"
+BIRTHDATE="Birthdate"
+NUMBER ="Number"
+KEY=0
+VALUE=1
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -51,11 +60,24 @@ class Server:
             addr = client_sock.getpeername()
             logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
             # TODO: Modify the send to avoid short-writes
+            self.__process_msg(msg)
             client_sock.send("{}\n".format(msg).encode('utf-8'))
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
             client_sock.close()
+
+    def __process_msg(self,msg):
+        client_data = {}
+        client_info =msg.split('|')
+        for data in client_info:
+            key_value = data.split(':')
+            client_data[key_value[KEY]] = key_value[VALUE]
+        logging.info(f'action: mensaje procesado  | result: {client_data} | from: {client_info}')
+        new_bet = Bet(client_data[CLIENT], client_data[NAME], client_data[LASTNAME], client_data[DNI], client_data[BIRTHDATE], client_data[NUMBER])
+        store_bets([new_bet])
+        logging.info(f'action: apuesta_almacenada  | result: success | dni: {client_data[DNI]} | numero: {client_data[NUMBER]}')
+        return 
 
     def __accept_new_connection(self):
         """
