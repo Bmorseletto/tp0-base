@@ -80,7 +80,6 @@ func (c *Client) StartClientLoop() {
 
 func (c *Client) send_message(msgID int) bool {
 	c.createClientSocket()
-	// TODO: Modify the send to avoid short-write
 	message := fmt.Sprintf(
 		"Client:%s|Name:%s|LastName:%s|Dni:%v|Birthdate:%s|Number:%v",
 		c.config.ID,
