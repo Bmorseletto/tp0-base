@@ -73,7 +73,6 @@ class Server:
         for data in client_info:
             key_value = data.split(':')
             client_data[key_value[KEY]] = key_value[VALUE]
-        logging.info(f'action: mensaje procesado  | result: {client_data} | from: {client_info}')
         new_bet = Bet(client_data[CLIENT], client_data[NAME], client_data[LASTNAME], client_data[DNI], client_data[BIRTHDATE], client_data[NUMBER])
         store_bets([new_bet])
         logging.info(f'action: apuesta_almacenada  | result: success | dni: {client_data[DNI]} | numero: {client_data[NUMBER]}')
