@@ -33,6 +33,11 @@ func InitConfig() (*viper.Viper, error) {
 
 	// Add env variables supported
 	v.BindEnv("id")
+	v.BindEnv("name")
+	v.BindEnv("lastname")
+	v.BindEnv("dni")
+	v.BindEnv("birthdate")
+	v.BindEnv("number")
 	v.BindEnv("server", "address")
 	v.BindEnv("loop", "period")
 	v.BindEnv("loop", "amount")
@@ -81,8 +86,13 @@ func InitLogger(logLevel string) error {
 // PrintConfig Print all the configuration parameters of the program.
 // For debugging purposes only
 func PrintConfig(v *viper.Viper) {
-	log.Infof("action: config | result: success | client_id: %s | server_address: %s | loop_amount: %v | loop_period: %v | log_level: %s",
+	log.Infof("action: config | result: success | client_id: %s | client_name:%s | client_last_name:%s | client_dni:%v | client_birthdate:%s | client_number: %s | server_address: %s | loop_amount: %v | loop_period: %v | log_level: %s",
 		v.GetString("id"),
+		v.GetString("name"),
+		v.GetString("lastname"),
+		v.GetInt("dni"),
+		v.GetString("birthdate"),
+		v.GetInt("number"),
 		v.GetString("server.address"),
 		v.GetInt("loop.amount"),
 		v.GetDuration("loop.period"),
@@ -106,6 +116,11 @@ func main() {
 	clientConfig := common.ClientConfig{
 		ServerAddress: v.GetString("server.address"),
 		ID:            v.GetString("id"),
+		Name:		   v.GetString("name"),
+		LastName:	   v.GetString("lastname"),
+		Dni:		   v.GetInt("dni"),
+		Birthdate:     v.GetString("birthdate"),
+		Number:		   v.GetInt("number"),
 		LoopAmount:    v.GetInt("loop.amount"),
 		LoopPeriod:    v.GetDuration("loop.period"),
 	}

@@ -16,6 +16,79 @@ services:
       entrypoint: /client
       environment:
          - CLI_ID=1
+         - CLI_NAME=client1
+         - CLI_LASTNAME=client1erez
+         - CLI_DNI=10000001
+         - CLI_BIRTHDATE=2000-03-01
+         - CLI_NUMBER=7073
+      networks:
+         - testing_net
+      depends_on:
+         - server
+      volumes:
+         - ./client/config.yaml:/config.yaml
+   client2:
+      container_name: client2
+      image: client:latest
+      entrypoint: /client
+      environment:
+         - CLI_ID=2
+         - CLI_NAME=client2
+         - CLI_LASTNAME=client2erez
+         - CLI_DNI=10000002
+         - CLI_BIRTHDATE=2000-03-02
+         - CLI_NUMBER=9631
+      networks:
+         - testing_net
+      depends_on:
+         - server
+      volumes:
+         - ./client/config.yaml:/config.yaml
+   client3:
+      container_name: client3
+      image: client:latest
+      entrypoint: /client
+      environment:
+         - CLI_ID=3
+         - CLI_NAME=client3
+         - CLI_LASTNAME=client3erez
+         - CLI_DNI=10000003
+         - CLI_BIRTHDATE=2000-03-03
+         - CLI_NUMBER=8863
+      networks:
+         - testing_net
+      depends_on:
+         - server
+      volumes:
+         - ./client/config.yaml:/config.yaml
+   client4:
+      container_name: client4
+      image: client:latest
+      entrypoint: /client
+      environment:
+         - CLI_ID=4
+         - CLI_NAME=client4
+         - CLI_LASTNAME=client4erez
+         - CLI_DNI=10000004
+         - CLI_BIRTHDATE=2000-03-04
+         - CLI_NUMBER=3963
+      networks:
+         - testing_net
+      depends_on:
+         - server
+      volumes:
+         - ./client/config.yaml:/config.yaml
+   client5:
+      container_name: client5
+      image: client:latest
+      entrypoint: /client
+      environment:
+         - CLI_ID=5
+         - CLI_NAME=client5
+         - CLI_LASTNAME=client5erez
+         - CLI_DNI=10000005
+         - CLI_BIRTHDATE=2000-03-05
+         - CLI_NUMBER=7854
       networks:
          - testing_net
       depends_on:

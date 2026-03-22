@@ -16,6 +16,11 @@ var log = logging.MustGetLogger("log")
 // ClientConfig Configuration used by the client
 type ClientConfig struct {
 	ID            string
+	Name 		  string
+	LastName 	  string
+	Dni 	      int
+	Birthdate 	  string
+	Number 		  int
 	ServerAddress string
 	LoopAmount    int
 	LoopPeriod    time.Duration
@@ -77,11 +82,15 @@ func (c *Client) send_message(msgID int) (bool){
 	// TODO: Modify the send to avoid short-write
 	fmt.Fprintf(
 		c.conn,
-		"[CLIENT %v] Message N°%v\n",
+		"Client:%s|Name:%s|LastName:%s|Dni:%v|Birthdate:%s|Number:%v\n",
 		c.config.ID,
-		msgID,
+		c.config.Name,
+		c.config.LastName,
+		c.config.Dni,
+		c.config.Birthdate,
+		c.config.Number,
 	)
-	msg, err := bufio.NewReader(c.conn).ReadString('\n')
+	_, err := bufio.NewReader(c.conn).ReadString('\n')
 	c.conn.Close()
 
 	if err != nil {
@@ -92,9 +101,9 @@ func (c *Client) send_message(msgID int) (bool){
 		return false
 	}
 
-	log.Infof("action: receive_message | result: success | client_id: %v | msg: %v",
-		c.config.ID,
-		msg,
+	log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v",
+		c.config.Dni,
+		c.config.Number,
 	)
 
 	// Wait a time between sending one message and the next one

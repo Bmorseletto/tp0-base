@@ -1,6 +1,8 @@
 import sys
 CLIENTS = 2
 OUTPUT = 1
+import random
+from datetime import datetime
 def main():
     if len(sys.argv) > 2:
         generated_yaml = yaml_generator(int(sys.argv[CLIENTS]))
@@ -58,7 +60,14 @@ def yaml_generator(client_amount):
                 }
     for n in range(client_amount):
         client = f"client{n+1}"
-        yaml_dicc["services"][client] = {"container_name": client, "image": "client:latest", "entrypoint": "/client", "environment": [f"CLI_ID={n+1}"], "networks":["testing_net"], "depends_on":["server"], "volumes": ["./client/config.yaml:/config.yaml"]}
+        client_name = f"client{n+1}"
+        client_last_name = f"client{n+1}erez"
+        dni = n+1 + 10 ** 7
+        birthdate = str(datetime.strptime(f"2000-03-{n+1}", "%Y-%m-%d").date())
+        lottery_number=random.randint(1, 9999)
+        yaml_dicc["services"][client] = {"container_name": client, "image": "client:latest", "entrypoint": "/client", 
+                                         "environment": [f"CLI_ID={n+1}", f"CLI_NAME={client_name}", f"CLI_LASTNAME={client_last_name}", f"CLI_DNI={dni}",f"CLI_BIRTHDATE={birthdate}", f"CLI_NUMBER={lottery_number}"], "networks":["testing_net"],
+                                        "depends_on":["server"], "volumes": ["./client/config.yaml:/config.yaml"]}
     return yaml_dicc
 
 if __name__ == "__main__":
