@@ -57,7 +57,7 @@ class Server:
             msg, addr=self.__comm_module.recv()
             logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
             amount_processed =self.__process_msg(msg)
-            logging.info(f'action: apuesta_recibida | result: success | cantidad: ${amount_processed}')
+            logging.info(f'action: apuesta_recibida | result: success | cantidad: {amount_processed}')
             self.__comm_module.send("{}".format(msg))
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
@@ -69,6 +69,7 @@ class Server:
         clients=msg.split('\n')
         n= 0
         for client in clients:
+            if client == "": continue
             client_info =client.split('|')
             for data in client_info:
                 key_value = data.split(':')

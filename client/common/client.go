@@ -87,7 +87,6 @@ func (c *Client) StartClientLoop() {
 			log.Infof("closing client")
 			return
 		default:
-			log.Infof("action: preparing_batch | batch: %v", batch)
 			c.prepare_message(scanner)
 			if c.config.CurrentMessage == "" {
 				break

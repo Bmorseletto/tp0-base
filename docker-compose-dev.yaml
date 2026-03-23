@@ -20,13 +20,14 @@ services:
          - CLI_LASTNAME=client1erez
          - CLI_DNI=10000001
          - CLI_BIRTHDATE=2000-03-01
-         - CLI_NUMBER=3511
+         - CLI_NUMBER=1813
       networks:
          - testing_net
       depends_on:
          - server
       volumes:
          - ./client/config.yaml:/config.yaml
+         - ./.data/agency-1.csv:/agency-1.csv
 networks:
    testing_net:
       ipam:
