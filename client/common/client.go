@@ -80,8 +80,9 @@ func (c *Client) StartClientLoop() {
 	}
 	scanner := bufio.NewScanner(f)
 	scanner.Split(bufio.ScanLines)
+	//conection with server is done outside and closed once all batches are sent
+	c.createClientSocket()
 	for batch := 1; batch <= c.config.LoopAmount; batch++ {
-		// Create the connection the server in every loop iteration. Send an
 		select {
 		case <-ctx.Done():
 			log.Infof("closing client")
@@ -92,12 +93,27 @@ func (c *Client) StartClientLoop() {
 				break
 			}
 			if !c.send_message(batch) {
+				c.conn.Close()
 				return
 			}
 		}
 
 	}
+	c.config.CurrentMessage = "\n"
+	c.send_message(0)
+	c.receive_winners()
+	c.conn.Close()
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
+}
+
+func (c *Client) receive_winners() error {
+	winners, err := c.conn.receive_message()
+	if err != nil {
+		return err
+	}
+	winner_list := strings.Split(winners, "|")
+	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", len(winner_list))
+	return nil
 }
 
 func (c *Client) prepare_message(scanner *bufio.Scanner) {
@@ -122,9 +138,7 @@ func (c *Client) prepare_message(scanner *bufio.Scanner) {
 }
 
 func (c *Client) send_message(msgID int) bool {
-	c.createClientSocket()
 	err := c.conn.send_message(c.config.CurrentMessage)
-	c.conn.Close()
 
 	if err != nil {
 		log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",

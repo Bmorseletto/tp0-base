@@ -63,3 +63,31 @@ func send_bytes(conn net.Conn, message []byte, message_len uint32) error {
 	}
 	return nil
 }
+
+func (m *CommModule) receive_message() (string, error) {
+	message_len_bytes, err := receive_bytes(m.conn, 4)
+	message_len := binary.BigEndian.Uint32(message_len_bytes)
+	if err != nil {
+		return "", err
+	}
+	message, err := receive_bytes(m.conn, message_len)
+	if err != nil {
+		return "", err
+	}
+	return string(message), err
+}
+
+func receive_bytes(conn net.Conn, message_len uint32) ([]byte, error) {
+	bytes_recived := uint32(0)
+	message := make([]byte, U32_BYTES)
+	for bytes_recived != message_len {
+		buffer := make([]byte, U32_BYTES)
+		n, err := conn.Read(buffer)
+		if err != nil {
+			return nil, err
+		}
+		bytes_recived += uint32(n)
+		message = append(message, buffer...)
+	}
+	return message, nil
+}

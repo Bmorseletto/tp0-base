@@ -42,6 +42,7 @@ def yaml_generator(client_amount):
                          "entrypoint": "python3 /main.py",
                          "environment": [
                              "PYTHONUNBUFFERED=1",
+                             f"AGENCYAMOUNT={client_amount}"
                             ],
                          "networks": [
                              "testing_net"],
