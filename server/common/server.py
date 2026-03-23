@@ -61,6 +61,7 @@ class Server:
             self.__comm_module.send("{}".format(msg))
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
+            self.__comm_module.send("Error {}".format(500))
         finally:
             self.__comm_module.close()
 
