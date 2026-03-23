@@ -67,7 +67,7 @@ def yaml_generator(client_amount):
         lottery_number=random.randint(1, 9999)
         yaml_dicc["services"][client] = {"container_name": client, "image": "client:latest", "entrypoint": "/client", 
                                          "environment": [f"CLI_ID={n+1}", f"CLI_NAME={client_name}", f"CLI_LASTNAME={client_last_name}", f"CLI_DNI={dni}",f"CLI_BIRTHDATE={birthdate}", f"CLI_NUMBER={lottery_number}"], "networks":["testing_net"],
-                                        "depends_on":["server"], "volumes": ["./client/config.yaml:/config.yaml"]}
+                                        "depends_on":["server"], "volumes": ["./client/config.yaml:/config.yaml", f"./.data/agency-{n+1}.csv:/agency-{n+1}.csv"]}
     return yaml_dicc
 
 if __name__ == "__main__":

@@ -41,6 +41,7 @@ func InitConfig() (*viper.Viper, error) {
 	v.BindEnv("server", "address")
 	v.BindEnv("loop", "period")
 	v.BindEnv("loop", "amount")
+	v.BindEnv("batch", "maxAmount")
 	v.BindEnv("log", "level")
 
 	// Try to read configuration from config file. If config file
@@ -86,16 +87,12 @@ func InitLogger(logLevel string) error {
 // PrintConfig Print all the configuration parameters of the program.
 // For debugging purposes only
 func PrintConfig(v *viper.Viper) {
-	log.Infof("action: config | result: success | client_id: %s | client_name:%s | client_last_name:%s | client_dni:%v | client_birthdate:%s | client_number: %s | server_address: %s | loop_amount: %v | loop_period: %v | log_level: %s",
+	log.Infof("action: config | result: success | client_id: %s |  server_address: %s | loop_amount: %v | loop_period: %v | maxAmount: %v | log_level: %s",
 		v.GetString("id"),
-		v.GetString("name"),
-		v.GetString("lastname"),
-		v.GetInt("dni"),
-		v.GetString("birthdate"),
-		v.GetInt("number"),
 		v.GetString("server.address"),
 		v.GetInt("loop.amount"),
 		v.GetDuration("loop.period"),
+		v.GetInt("batch.maxAmount"),
 		v.GetString("log.level"),
 	)
 }
@@ -109,20 +106,17 @@ func main() {
 	if err := InitLogger(v.GetString("log.level")); err != nil {
 		log.Criticalf("%s", err)
 	}
-
 	// Print program config with debugging purposes
 	PrintConfig(v)
-
+	bets_path := fmt.Sprintf("/agency-%s.csv", v.GetString("id"))
+	log.Infof("path: %s", bets_path)
 	clientConfig := common.ClientConfig{
-		ServerAddress: v.GetString("server.address"),
-		ID:            v.GetString("id"),
-		Name:		   v.GetString("name"),
-		LastName:	   v.GetString("lastname"),
-		Dni:		   v.GetInt("dni"),
-		Birthdate:     v.GetString("birthdate"),
-		Number:		   v.GetInt("number"),
-		LoopAmount:    v.GetInt("loop.amount"),
-		LoopPeriod:    v.GetDuration("loop.period"),
+		ID:             v.GetString("id"),
+		ServerAddress:  v.GetString("server.address"),
+		LoopAmount:     v.GetInt("loop.amount"),
+		LoopPeriod:     v.GetDuration("loop.period"),
+		MaxBatchAmount: v.GetInt("batch.maxAmount"),
+		Bets:           bets_path,
 	}
 
 	client := common.NewClient(clientConfig)

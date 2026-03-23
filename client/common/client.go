@@ -1,9 +1,12 @@
 package common
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -12,17 +15,22 @@ import (
 
 var log = logging.MustGetLogger("log")
 
+const MAX_BATCH_BYTES = 8192
+const NAME = 0
+const LASTNAME = 1
+const DNI = 2
+const BIRTHDATE = 3
+const NUMBER = 4
+
 // ClientConfig Configuration used by the client
 type ClientConfig struct {
-	ID            string
-	Name          string
-	LastName      string
-	Dni           int
-	Birthdate     string
-	Number        int
-	ServerAddress string
-	LoopAmount    int
-	LoopPeriod    time.Duration
+	ID             string
+	ServerAddress  string
+	LoopAmount     int
+	LoopPeriod     time.Duration
+	MaxBatchAmount int
+	Bets           string
+	CurrentMessage string
 }
 
 // Client Entity that encapsulates how
@@ -62,14 +70,29 @@ func (c *Client) StartClientLoop() {
 	defer stop()
 	// There is an autoincremental msgID to identify every message sent
 	// Messages if the message amount threshold has not been surpassed
-	for msgID := 1; msgID <= c.config.LoopAmount; msgID++ {
+	f, err := os.Open(c.config.Bets)
+	if err != nil {
+		log.Errorf("action: open_bets_csv | result: fail | client_id: %v | error: %v",
+			c.config.ID,
+			err,
+		)
+		return
+	}
+	scanner := bufio.NewScanner(f)
+	scanner.Split(bufio.ScanLines)
+	for batch := 1; batch <= c.config.LoopAmount; batch++ {
 		// Create the connection the server in every loop iteration. Send an
 		select {
 		case <-ctx.Done():
 			log.Infof("closing client")
 			return
 		default:
-			if !c.send_message(msgID) {
+			log.Infof("action: preparing_batch | batch: %v", batch)
+			c.prepare_message(scanner)
+			if c.config.CurrentMessage == "" {
+				break
+			}
+			if !c.send_message(batch) {
 				return
 			}
 		}
@@ -78,18 +101,30 @@ func (c *Client) StartClientLoop() {
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
 }
 
+func (c *Client) prepare_message(scanner *bufio.Scanner) {
+	batch_counter := 0
+	for scanner.Scan() {
+		line := scanner.Text()
+		bet_data := strings.Split(line, ",")
+		c.config.CurrentMessage += fmt.Sprintf(
+			"Client:%s|Name:%s|LastName:%s|Dni:%v|Birthdate:%s|Number:%v\n",
+			c.config.ID,
+			bet_data[NAME],
+			bet_data[LASTNAME],
+			bet_data[DNI],
+			bet_data[BIRTHDATE],
+			bet_data[NUMBER],
+		)
+		batch_counter += 1
+		if batch_counter == c.config.MaxBatchAmount || MAX_BATCH_BYTES < len([]byte(c.config.CurrentMessage)) {
+			return
+		}
+	}
+}
+
 func (c *Client) send_message(msgID int) bool {
 	c.createClientSocket()
-	message := fmt.Sprintf(
-		"Client:%s|Name:%s|LastName:%s|Dni:%v|Birthdate:%s|Number:%v",
-		c.config.ID,
-		c.config.Name,
-		c.config.LastName,
-		c.config.Dni,
-		c.config.Birthdate,
-		c.config.Number,
-	)
-	err := c.conn.send_message(message)
+	err := c.conn.send_message(c.config.CurrentMessage)
 	c.conn.Close()
 
 	if err != nil {
@@ -100,11 +135,11 @@ func (c *Client) send_message(msgID int) bool {
 		return false
 	}
 
-	log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v",
+	/*log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v",
 		c.config.Dni,
 		c.config.Number,
-	)
-
+	)*/
+	c.config.CurrentMessage = ""
 	// Wait a time between sending one message and the next one
 	time.Sleep(c.config.LoopPeriod)
 	return true

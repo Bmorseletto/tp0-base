@@ -56,7 +56,8 @@ class Server:
         try:
             msg, addr=self.__comm_module.recv()
             logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-            self.__process_msg(msg)
+            amount_processed =self.__process_msg(msg)
+            logging.info(f'action: apuesta_recibida | result: success | cantidad: ${amount_processed}')
             self.__comm_module.send("{}".format(msg))
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
@@ -65,14 +66,18 @@ class Server:
 
     def __process_msg(self,msg):
         client_data = {}
-        client_info =msg.split('|')
-        for data in client_info:
-            key_value = data.split(':')
-            client_data[key_value[KEY]] = key_value[VALUE]
-        new_bet = Bet(client_data[CLIENT], client_data[NAME], client_data[LASTNAME], client_data[DNI], client_data[BIRTHDATE], client_data[NUMBER])
-        store_bets([new_bet])
-        logging.info(f'action: apuesta_almacenada  | result: success | dni: {client_data[DNI]} | numero: {client_data[NUMBER]}')
-        return 
+        clients=msg.split('\n')
+        n= 0
+        for client in clients:
+            client_info =client.split('|')
+            for data in client_info:
+                key_value = data.split(':')
+                client_data[key_value[KEY]] = key_value[VALUE]
+            new_bet = Bet(client_data[CLIENT], client_data[NAME], client_data[LASTNAME], client_data[DNI], client_data[BIRTHDATE], client_data[NUMBER])
+            store_bets([new_bet])
+            logging.info(f'action: apuesta_almacenada  | result: success | dni: {client_data[DNI]} | numero: {client_data[NUMBER]}')
+            n+=1
+        return n
 
     def __accept_new_connection(self):
         """
