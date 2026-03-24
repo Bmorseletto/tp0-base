@@ -181,6 +181,10 @@ El incumplimiento de las pruebas es condición de desaprobación, pero su cumpli
 Respetar el formato y contenido las entradas de logs descritas en los ejercicios, pues son las que se chequean en cada uno de los tests.
 ## Resolucion de Ejercicios
 ### Ejercicio 4:
+para correr el servidor y el cliente:
+``` bash
+make docker-compose-up
+``` 
 Para este ejercicion se utilizo la deteccion de signals para el cliente y el servidor de la siguiente manera:
 #### Cliente
 ``` Golang
