@@ -179,3 +179,16 @@ Se proveen [pruebas automáticas](https://github.com/7574-sistemas-distribuidos/
 
 El incumplimiento de las pruebas es condición de desaprobación, pero su cumplimiento no es suficiente para la aprobación.  Se pide a los alumnos leer atentamente y **tener en cuenta** los criterios de corrección informados  [en el campus](https://campusgrado.fi.uba.ar/mod/page/view.php?id=73393).
 Respetar el formato y contenido las entradas de logs descritas en los ejercicios, pues son las que se chequean en cada uno de los tests.
+## Resolucion de Ejercicios
+### Ejercicio 1:
+Para correr el generador de .yaml se puede hacer:
+
+``` 
+sh ./generar-compose.sh ${outfile} ${cantidad_de_clientes}
+``` 
+o
+``` 
+make docker-compose-generate OUT=${outfile} CLIENTS=${cantidad_de_clientes}
+``` 
+#### Aclaraciones
+se hizo un programa auxiliar wn python llamado docker-compose-generator.py para poder hacer este ejercicio y vale la pena mencionar que aunque se respondio en el foro que se podia usar un libreria de yaml para este ejecicio, ya lo habia terminado para el momento que vi esta respuesta

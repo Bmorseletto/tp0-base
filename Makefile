@@ -37,3 +37,7 @@ docker-compose-down:
 docker-compose-logs:
 	docker compose -f docker-compose-dev.yaml logs -f
 .PHONY: docker-compose-logs
+
+docker-compose-generate:
+	sh ./generar-compose.sh $(OUT) $(CLIENTS)
+.PHONY: docker-compose-generate
