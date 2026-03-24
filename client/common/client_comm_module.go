@@ -70,7 +70,6 @@ func (m *CommModule) receive_message() (string, error) {
 		return "", err
 	}
 	message_len := binary.BigEndian.Uint32(message_len_bytes)
-	log.Infof("recived head: %v", message_len)
 	message, err := receive_bytes(m.conn, message_len)
 	if err != nil {
 		return "", err
@@ -86,8 +85,6 @@ func receive_bytes(conn net.Conn, message_len uint32) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-
-		// 3. Acumulamos lo leído en esta iteración
 		bytes_received += uint32(n)
 	}
 

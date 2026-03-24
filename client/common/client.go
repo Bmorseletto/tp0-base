@@ -102,7 +102,6 @@ func (c *Client) StartClientLoop() {
 
 	}
 	c.config.CurrentMessage = "\n"
-	log.Infof("finished sending batches")
 	c.send_message(0)
 	c.receive_winners()
 	c.conn.Close()
@@ -138,7 +137,6 @@ func (c *Client) prepare_message(scanner *bufio.Scanner) {
 		)
 		batch_counter += 1
 		if batch_counter == c.config.MaxBatchAmount || MAX_BATCH_BYTES < len([]byte(c.config.CurrentMessage)) {
-			log.Infof("linea %s", c.config.CurrentMessage)
 			return
 		}
 	}
