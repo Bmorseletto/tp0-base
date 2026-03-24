@@ -179,3 +179,14 @@ Se proveen [pruebas automáticas](https://github.com/7574-sistemas-distribuidos/
 
 El incumplimiento de las pruebas es condición de desaprobación, pero su cumplimiento no es suficiente para la aprobación.  Se pide a los alumnos leer atentamente y **tener en cuenta** los criterios de corrección informados  [en el campus](https://campusgrado.fi.uba.ar/mod/page/view.php?id=73393).
 Respetar el formato y contenido las entradas de logs descritas en los ejercicios, pues son las que se chequean en cada uno de los tests.
+## Resolucion de Ejercicios
+### Ejercicio 3:
+Para este ejercicion se hizo un script the bash qeue permite verificar el correcto funcionamiento del servidor
+la script se puede correr con
+``` 
+sh ./validar-echo-server.sh
+``` 
+o
+```
+make validation
+```
