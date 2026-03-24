@@ -180,29 +180,42 @@ Se proveen [pruebas automáticas](https://github.com/7574-sistemas-distribuidos/
 El incumplimiento de las pruebas es condición de desaprobación, pero su cumplimiento no es suficiente para la aprobación.  Se pide a los alumnos leer atentamente y **tener en cuenta** los criterios de corrección informados  [en el campus](https://campusgrado.fi.uba.ar/mod/page/view.php?id=73393).
 Respetar el formato y contenido las entradas de logs descritas en los ejercicios, pues son las que se chequean en cada uno de los tests.
 ## Resolucion de Ejercicios
-### Ejercicio 7:
+### Ejercicio 8:
 Para correr el ejercicio se usa:
 ``` bash
 make docker-compose-up
 ``` 
-Para este ejercicio se modifico el servidor del ejercicio 6 de tal manera que este no cierre la conexion con un cliente hasta despues de procesar todas las apuestas esto es para poder mandar los ganadores a sus repectivas agencias y evitar over head generado por constante hadnshake entre servidor y clientes.
-se utlizaron varios diccionarios para poder guardar referencias de direciones de ip+puerto y sus respectivas agencias
-``` Python
-class Server:
-    def __init__(self, port, listen_backlog, agency_amount):
-        # Initialize server socket
-        self.__comm_module = CommModule(port, listen_backlog)
-        self._loop = True
-        self._agency_addr = {}
-        self._agency_status = {}
-        self._agency_amount = agency_amount
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
+Muy similar al ejercicio anterior, la dierencia principal es que se implento threading para poder recibir y procesar los mensajes de los distintos clientes de manera concurrente.
+se decidio el uso de thread en vez de procesos debido a resultaba mas facil la conversion entre el ejercicio 7 a lo pedido en el ejercicio 8. Se tuvo encuenta, ya que se uso la libreria de python de threading, que debido a  global interpreter lock del lenguaje esto podria causar tardanzas y mayor uso de recursos pero se considero que la funciones utlizadas para la parte concurente del codigo no generaban tanto conflito relevante como para optar a usar procesos ya que estas funciones eran relativamente simples y se encargaban mas que nada de recibirlos mensajes del cliente, y procesar los batches que son opreacones de strings.
+
+Otra cosa a destacar de este ejercicio fue el uso de locks para permitir sincronizacion y evitar race conditions:
+para el modulo de comunicacion y dentro de la clase servidor se les agrego un atributo _lock para permitir el locking de secciones criticas donde se interactuaba con variables compartidas como los diccionario que contenian los socets de los clientes y demas.
+
+Ejemplo:
+
+``` py
 class CommModule:
     def __init__(self, port, listen_backlog):
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
         self._sockets = {}
-
+        self._lock=  threading.Lock()
+    def recv(self, addr):
+        header=self._recv_data(HEADER_LEN, addr)
+        msg_len = int.from_bytes(header, byteorder=ENDIAN)
+        msg = self._recv_data(msg_len, addr).decode(ENCODING)
+        return msg
+    def _recv_data(self, data_len, addr):
+        data = b''
+        with self._lock:
+            client_socket = self._sockets[addr]
+        data = client_socket.recv(data_len)
+        while len(data) < data_len:
+            new_data = client_socket.recv(data_len-len(data))
+            if not new_data:
+                raise ConnectionError(SOCKET_CLOSED_ERROR)
+            data += new_data
+        return data
 ``` 
-para poder notificar al servidor que un cliente termino de mandar sus mensajes el cliente manda un mensaje con un unico "\n"
+
