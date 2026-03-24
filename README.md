@@ -180,46 +180,68 @@ Se proveen [pruebas automáticas](https://github.com/7574-sistemas-distribuidos/
 El incumplimiento de las pruebas es condición de desaprobación, pero su cumplimiento no es suficiente para la aprobación.  Se pide a los alumnos leer atentamente y **tener en cuenta** los criterios de corrección informados  [en el campus](https://campusgrado.fi.uba.ar/mod/page/view.php?id=73393).
 Respetar el formato y contenido las entradas de logs descritas en los ejercicios, pues son las que se chequean en cada uno de los tests.
 ## Resolucion de Ejercicios
-### Ejercicio 4:
-Para este ejercicion se utilizo la deteccion de signals para el cliente y el servidor de la siguiente manera:
-#### Cliente
-``` Golang
-    func (c *Client) StartClientLoop() {
-    ctx, stop := signal.NotifyContext(context.Background(),syscall.SIGTERM)
-    defer stop()
-    // There is an autoincremental msgID to identify every message sent
-    // Messages if the message amount threshold has not been surpassed
-    for msgID := 1; msgID <= c.config.LoopAmount; msgID++ {
-        // Create the connection the server in every loop iteration. Send an
-        select{
-        case <- ctx.Done():
-            log.Infof("closing client")
-            return
-        default:
-            if !c.send_message(msgID){return}
-        }
-        
-    }
-    log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
-}
-```
-Ya que el cliente en este caso crea y cierra la coneccion dentro de send_message es solo necesario esperar a que termine esa funcion y vuelva a empezar el loop para que el context se de por terminado
-#### Servidor
-``` Python
-class Server:
-    def __init__(self, port, listen_backlog):
-        # Initialize server socket
-        self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._server_socket.bind(('', port))
-        self._server_socket.listen(listen_backlog)
-        self._loop = True
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
-    def __handle_shutdown(self,signal_number, stack_frame):
-        logging.info("closing loop")
-        self._loop = False
-        logging.info("closing socket")
-        self._server_socket.shutdown(socket.SHUT_RDWR)
-        self._server_socket.close()
+### Ejercicio 5:
+para este ejercicio se modifico el generador de dockercompose.yaml para agregar los elementos necesarios de las apuestas como variables de entorno.
 
+en relacion a la comunicacion entre el cliente y el servidor: 
+
+Se utulizo protocolo tcp para asegurar la llegada de los mensakes tanto del lado del servidor como del lado del cliente.
+
+Para tanto el servidor como el cliente se hicieron modulos de comunicacion para separar y abstaraer el uso de sockets y la comunicacion entre ellos 
+- [Modulo del cliente](client/common/client_comm_module.go)
+- [Modulo del servidor](server/common/comm_module.py)
+
+En realcion a la serialiacion de dato y a la solucion del problema de short ready short write se hizo lo siguiente:
+Primero se manda un header de u32 o 4 bytes de largo que simboliza la longitud de el mensaje que se esta por mandar
+luego se manda una string con el siguiente formato:
+``` Go
+"Client:%s|Name:%s|LastName:%s|Dni:%v|Birthdate:%s|Number:%v"
 ``` 
-para qel caso de servidor se utiliizo la librearia singlas para poder hacer que se ejecute la funcion handle shutdown al detectar signal.SIGTERM
+el modulo de comunicacion para mandar el mensaje y el header itera hasta que se haya mandado todo el mensaje
+``` Go
+func (m *CommModule) send_message(message string) error {
+	message_bytes := []byte(message)
+	message_len := uint32(len(message_bytes))
+	len_header := make([]byte, U32_BYTES)
+	binary.BigEndian.PutUint32(len_header, message_len)
+	err := send_bytes(m.conn, len_header, U32_BYTES)
+	if err != nil {
+		return err
+	}
+	err = send_bytes(m.conn, message_bytes, message_len)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func send_bytes(conn net.Conn, message []byte, message_len uint32) error {
+	bytes_sent := uint32(0)
+	for bytes_sent != message_len {
+		n, err := conn.Write(message[bytes_sent:])
+		bytes_sent += uint32(n)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+``` 
+similarmente en el servidor su modulo de comunicacion iterra hasta que haya recibido todo el mensaje tanto para el header como para el mensaje de la apuesta:
+``` Python
+    def recv(self):
+        header=self._recv_data(4)
+        msg_len = int.from_bytes(header, byteorder='big')
+        msg = self._recv_data(msg_len).decode('utf-8')
+        addr = self.__client_socket.getpeername()
+        return msg, addr
+    def _recv_data(self, data_len):
+        data = b''
+        data = self.__client_socket.recv(data_len)
+        while len(data) < data_len:
+            new_data = self.__client_socket.recv(data_len-len(data))
+            recived_amount += len(data)
+            if not new_data:
+                raise ConnectionError("Socket closed")
+            data += new_data
+        return data
+``` 
