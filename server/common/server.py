@@ -7,6 +7,7 @@ from common.utils import store_bets
 from common.utils import load_bets
 from common.utils import has_won
 from common.comm_module import CommModule
+import threading
 CLIENT = "Client"
 NAME = "Name"
 LASTNAME = "LastName"
@@ -20,6 +21,7 @@ PENDING = False
 DONE = True
 FINISHED_SENDING = "\n"
 
+
 class Server:
     def __init__(self, port, listen_backlog, agency_amount):
         # Initialize server socket
@@ -28,6 +30,8 @@ class Server:
         self._agency_addr = {}
         self._agency_status = {}
         self._agency_amount = agency_amount
+        self._threads = []
+        self._lock=  threading.Lock()
         signal.signal(signal.SIGTERM, self.__handle_shutdown)
 
     def run(self):
@@ -38,17 +42,21 @@ class Server:
         communication with a client. After client with communucation
         finishes, servers starts to accept new connections again
         """
-
+        agencies_conected = 0
         while self._loop:
-            if len(self._agency_status.keys()) == self._agency_amount and self._all_agencies_done():
+            if len(self._agency_status.keys()) == self._agency_amount:
+                for thread in self._threads:
+                    thread.join()
                 logging.info('action: sorteo | result: success')
                 self.process_bets()
                 self._agency_status ={}
-                break
             else:
                 try:
                     addr=self.__accept_new_connection()
-                    self.__handle_client_connection(addr)
+                    thread=threading.Thread(target=self.__handle_client_connection, args=(addr,))
+                    thread.start()
+                    with self._lock:
+                        self._threads.append(thread)
                 except OSError:
                     self._loop = False
                     self.__comm_module.close_all()
@@ -65,6 +73,9 @@ class Server:
         logging.info("closing socket")
         self._server_socket.shutdown(socket.SHUT_RDWR)
         self._server_socket.close()
+        logging.info("joining dangling threads")
+        for thread in self._threads:
+            thread.join()
 
     def process_bets(self):
         bets=load_bets()
@@ -86,12 +97,16 @@ class Server:
         If a problem arises in the communication with the client, the
         client socket will also be closed
         """
+        with self._lock:
+            agency_status=self._agency_status[addr]
         try:
-            while  self._agency_status[addr] == PENDING:
+            while  agency_status == PENDING:
                 msg=self.__comm_module.recv(addr)
                 logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
                 if msg == FINISHED_SENDING:
-                    self._agency_status[addr] = DONE
+                    with self._lock:
+                        agency_status = DONE
+                        self._agency_status[addr] = DONE
                 else:
                     amount_processed =self.__process_msg(msg, addr)
                     logging.info(f'action: apuesta_recibida | result: success | cantidad: {amount_processed}')
@@ -111,10 +126,11 @@ class Server:
                 key_value = data.split(':')
                 client_data[key_value[KEY]] = key_value[VALUE]
             new_bet = Bet(client_data[CLIENT], client_data[NAME], client_data[LASTNAME], client_data[DNI], client_data[BIRTHDATE], client_data[NUMBER])
-            store_bets([new_bet])
-            logging.info(f'action: apuesta_almacenada  | result: success | dni: {client_data[DNI]} | numero: {client_data[NUMBER]}')
-            n+=1
-            self._agency_addr[int(client_data[CLIENT])] = addr
+            with self._lock:
+                store_bets([new_bet])
+                logging.info(f'action: apuesta_almacenada  | result: success | dni: {client_data[DNI]} | numero: {client_data[NUMBER]}')
+                n+=1
+                self._agency_addr[int(client_data[CLIENT])] = addr
         return n
 
     def __accept_new_connection(self):
@@ -130,7 +146,8 @@ class Server:
         try:
             addr = self.__comm_module.accept_connection()
             logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
-            self._agency_status[addr] = PENDING
+            with self._lock:
+                self._agency_status[addr] = PENDING
             return addr
         except OSError:
             raise OSError
