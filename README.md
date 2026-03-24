@@ -179,3 +179,47 @@ Se proveen [pruebas automáticas](https://github.com/7574-sistemas-distribuidos/
 
 El incumplimiento de las pruebas es condición de desaprobación, pero su cumplimiento no es suficiente para la aprobación.  Se pide a los alumnos leer atentamente y **tener en cuenta** los criterios de corrección informados  [en el campus](https://campusgrado.fi.uba.ar/mod/page/view.php?id=73393).
 Respetar el formato y contenido las entradas de logs descritas en los ejercicios, pues son las que se chequean en cada uno de los tests.
+## Resolucion de Ejercicios
+### Ejercicio 4:
+Para este ejercicion se utilizo la deteccion de signals para el cliente y el servidor de la siguiente manera:
+#### Cliente
+``` Golang
+    func (c *Client) StartClientLoop() {
+    ctx, stop := signal.NotifyContext(context.Background(),syscall.SIGTERM)
+    defer stop()
+    // There is an autoincremental msgID to identify every message sent
+    // Messages if the message amount threshold has not been surpassed
+    for msgID := 1; msgID <= c.config.LoopAmount; msgID++ {
+        // Create the connection the server in every loop iteration. Send an
+        select{
+        case <- ctx.Done():
+            log.Infof("closing client")
+            return
+        default:
+            if !c.send_message(msgID){return}
+        }
+        
+    }
+    log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
+}
+```
+Ya que el cliente en este caso crea y cierra la coneccion dentro de send_message es solo necesario esperar a que termine esa funcion y vuelva a empezar el loop para que el context se de por terminado
+#### Servidor
+``` Python
+class Server:
+    def __init__(self, port, listen_backlog):
+        # Initialize server socket
+        self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._server_socket.bind(('', port))
+        self._server_socket.listen(listen_backlog)
+        self._loop = True
+        signal.signal(signal.SIGTERM, self.__handle_shutdown)
+    def __handle_shutdown(self,signal_number, stack_frame):
+        logging.info("closing loop")
+        self._loop = False
+        logging.info("closing socket")
+        self._server_socket.shutdown(socket.SHUT_RDWR)
+        self._server_socket.close()
+
+``` 
+para qel caso de servidor se utiliizo la librearia singlas para poder hacer que se ejecute la funcion handle shutdown al detectar signal.SIGTERM
