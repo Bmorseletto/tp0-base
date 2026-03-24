@@ -181,6 +181,10 @@ El incumplimiento de las pruebas es condición de desaprobación, pero su cumpli
 Respetar el formato y contenido las entradas de logs descritas en los ejercicios, pues son las que se chequean en cada uno de los tests.
 ## Resolucion de Ejercicios
 ### Ejercicio 6:
+para correr el servidor y el cliente:
+``` bash
+make docker-compose-up
+``` 
 para este ejercicio se mantuvo similar el manejo de mensajes al ejercicio anterior la diferencia principal ahora es que la informacion sobre las apuestas es extraida por un csv que es agregado como un volume dentro de la imagen de docker y ademas los batches estan con el formato:
 ``` Go
 "Client:%s|Name:%s|LastName:%s|Dni:%v|Birthdate:%s|Number:%v\n
