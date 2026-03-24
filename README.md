@@ -180,10 +180,29 @@ Se proveen [pruebas automáticas](https://github.com/7574-sistemas-distribuidos/
 El incumplimiento de las pruebas es condición de desaprobación, pero su cumplimiento no es suficiente para la aprobación.  Se pide a los alumnos leer atentamente y **tener en cuenta** los criterios de corrección informados  [en el campus](https://campusgrado.fi.uba.ar/mod/page/view.php?id=73393).
 Respetar el formato y contenido las entradas de logs descritas en los ejercicios, pues son las que se chequean en cada uno de los tests.
 ## Resolucion de Ejercicios
-### Ejercicio 6:
-para este ejercicio se mantuvo similar el manejo de mensajes al ejercicio anterior la diferencia principal ahora es que la informacion sobre las apuestas es extraida por un csv que es agregado como un volume dentro de la imagen de docker y ademas los batches estan con el formato:
-``` Go
-"Client:%s|Name:%s|LastName:%s|Dni:%v|Birthdate:%s|Number:%v\n
-Client:%s|Name:%s|LastName:%s|Dni:%v|Birthdate:%s|Number:%v\n"
-```  
-para poder serparar la informacion de cada apuesta en el servidor
+### Ejercicio 7:
+Para correr el ejercicio se usa:
+``` bash
+make docker-compose-up
+``` 
+Para este ejercicio se modifico el servidor del ejercicio 6 de tal manera que este no cierre la conexion con un cliente hasta despues de procesar todas las apuestas esto es para poder mandar los ganadores a sus repectivas agencias y evitar over head generado por constante hadnshake entre servidor y clientes.
+se utlizaron varios diccionarios para poder guardar referencias de direciones de ip+puerto y sus respectivas agencias
+``` Python
+class Server:
+    def __init__(self, port, listen_backlog, agency_amount):
+        # Initialize server socket
+        self.__comm_module = CommModule(port, listen_backlog)
+        self._loop = True
+        self._agency_addr = {}
+        self._agency_status = {}
+        self._agency_amount = agency_amount
+        signal.signal(signal.SIGTERM, self.__handle_shutdown)
+class CommModule:
+    def __init__(self, port, listen_backlog):
+        self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._server_socket.bind(('', port))
+        self._server_socket.listen(listen_backlog)
+        self._sockets = {}
+
+``` 
+para poder notificar al servidor que un cliente termino de mandar sus mensajes el cliente manda un mensaje con un unico "\n"
