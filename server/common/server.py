@@ -43,6 +43,8 @@ class Server:
             if len(self._agency_status.keys()) == self._agency_amount and self._all_agencies_done():
                 logging.info('action: sorteo | result: success')
                 self.process_bets()
+                self._agency_status ={}
+                break
             else:
                 try:
                     addr=self.__accept_new_connection()
@@ -66,10 +68,12 @@ class Server:
 
     def process_bets(self):
         bets=load_bets()
-        agencies_winners = {}.fromkeys(self._agency_addr.keys(), [])
+        agencies_winners = {agency_id: [] for agency_id in self._agency_addr.keys()}
+        logging.info(f'ganador de agencia bets {bets}')
         for bet in bets:
             if has_won(bet):
                 agencies_winners[bet.agency].append(bet.document)
+        logging.info(f'ganador de agencia items {agencies_winners}')
         for agency,winners in agencies_winners.items():
             winners_message="|".join(winners)
             self.__comm_module.send(winners_message, self._agency_addr[agency])
@@ -83,14 +87,15 @@ class Server:
         client socket will also be closed
         """
         try:
-            msg=self.__comm_module.recv(addr)
-            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-            if msg == FINISHED_SENDING:
-                self._agency_status[addr] = DONE
-            else:
-                amount_processed =self.__process_msg(msg, addr)
-                logging.info(f'action: apuesta_recibida | result: success | cantidad: {amount_processed}')
-            self.__comm_module.send("{}".format(msg), addr)
+            while  self._agency_status[addr] == PENDING:
+                msg=self.__comm_module.recv(addr)
+                logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
+                if msg == FINISHED_SENDING:
+                    self._agency_status[addr] = DONE
+                else:
+                    amount_processed =self.__process_msg(msg, addr)
+                    logging.info(f'action: apuesta_recibida | result: success | cantidad: {amount_processed}')
+                #self.__comm_module.send("{}".format(msg), addr)
         except OSError as e:
             logging.error(f"action: receive_message | result: fail | error: {e}")
             self.__comm_module.send("Error {}".format(500), addr)
@@ -109,7 +114,7 @@ class Server:
             store_bets([new_bet])
             logging.info(f'action: apuesta_almacenada  | result: success | dni: {client_data[DNI]} | numero: {client_data[NUMBER]}')
             n+=1
-            self._agency_addr[client_data[CLIENT]] = addr
+            self._agency_addr[int(client_data[CLIENT])] = addr
         return n
 
     def __accept_new_connection(self):

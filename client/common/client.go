@@ -80,9 +80,10 @@ func (c *Client) StartClientLoop() {
 	}
 	scanner := bufio.NewScanner(f)
 	scanner.Split(bufio.ScanLines)
+	file_done := false
 	//conection with server is done outside and closed once all batches are sent
 	c.createClientSocket()
-	for batch := 1; batch <= c.config.LoopAmount; batch++ {
+	for batch := 1; batch <= c.config.LoopAmount && file_done == false; batch++ {
 		select {
 		case <-ctx.Done():
 			log.Infof("closing client")
@@ -90,6 +91,7 @@ func (c *Client) StartClientLoop() {
 		default:
 			c.prepare_message(scanner)
 			if c.config.CurrentMessage == "" {
+				file_done = true
 				break
 			}
 			if !c.send_message(batch) {
@@ -100,6 +102,7 @@ func (c *Client) StartClientLoop() {
 
 	}
 	c.config.CurrentMessage = "\n"
+	log.Infof("finished sending batches")
 	c.send_message(0)
 	c.receive_winners()
 	c.conn.Close()
@@ -111,7 +114,10 @@ func (c *Client) receive_winners() error {
 	if err != nil {
 		return err
 	}
-	winner_list := strings.Split(winners, "|")
+	winner_list := []string{}
+	if winners != "" {
+		winner_list = strings.Split(winners, "|")
+	}
 	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", len(winner_list))
 	return nil
 }
@@ -132,6 +138,7 @@ func (c *Client) prepare_message(scanner *bufio.Scanner) {
 		)
 		batch_counter += 1
 		if batch_counter == c.config.MaxBatchAmount || MAX_BATCH_BYTES < len([]byte(c.config.CurrentMessage)) {
+			log.Infof("linea %s", c.config.CurrentMessage)
 			return
 		}
 	}
