@@ -179,3 +179,11 @@ Se proveen [pruebas automáticas](https://github.com/7574-sistemas-distribuidos/
 
 El incumplimiento de las pruebas es condición de desaprobación, pero su cumplimiento no es suficiente para la aprobación.  Se pide a los alumnos leer atentamente y **tener en cuenta** los criterios de corrección informados  [en el campus](https://campusgrado.fi.uba.ar/mod/page/view.php?id=73393).
 Respetar el formato y contenido las entradas de logs descritas en los ejercicios, pues son las que se chequean en cada uno de los tests.
+## Resolucion de Ejercicios
+### Ejercicio 6:
+para este ejercicio se mantuvo similar el manejo de mensajes al ejercicio anterior la diferencia principal ahora es que la informacion sobre las apuestas es extraida por un csv que es agregado como un volume dentro de la imagen de docker y ademas los batches estan con el formato:
+``` Go
+"Client:%s|Name:%s|LastName:%s|Dni:%v|Birthdate:%s|Number:%v\n
+Client:%s|Name:%s|LastName:%s|Dni:%v|Birthdate:%s|Number:%v\n"
+```  
+para poder serparar la informacion de cada apuesta en el servidor
