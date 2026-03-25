@@ -35,8 +35,9 @@ type ClientConfig struct {
 
 // Client Entity that encapsulates how
 type Client struct {
-	config ClientConfig
-	conn   *CommModule
+	config          ClientConfig
+	conn            *CommModule
+	sulprus_message string
 }
 
 // NewClient Initializes a new client receiving the configuration
@@ -83,7 +84,7 @@ func (c *Client) StartClientLoop() {
 	file_done := false
 	//conection with server is done outside and closed once all batches are sent
 	c.createClientSocket()
-	for batch := 1; batch <= c.config.LoopAmount && file_done == false; batch++ {
+	for batch := 1; (batch <= c.config.LoopAmount || c.sulprus_message != "") && file_done == false; batch++ {
 		select {
 		case <-ctx.Done():
 			log.Infof("closing client")
@@ -122,11 +123,15 @@ func (c *Client) receive_winners() error {
 }
 
 func (c *Client) prepare_message(scanner *bufio.Scanner) {
+	if c.sulprus_message != "" {
+		c.config.CurrentMessage += c.sulprus_message
+		c.sulprus_message = ""
+	}
 	batch_counter := 0
 	for scanner.Scan() {
 		line := scanner.Text()
 		bet_data := strings.Split(line, ",")
-		c.config.CurrentMessage += fmt.Sprintf(
+		new_bet := fmt.Sprintf(
 			"Client:%s|Name:%s|LastName:%s|Dni:%v|Birthdate:%s|Number:%v\n",
 			c.config.ID,
 			bet_data[NAME],
@@ -135,13 +140,18 @@ func (c *Client) prepare_message(scanner *bufio.Scanner) {
 			bet_data[BIRTHDATE],
 			bet_data[NUMBER],
 		)
-		batch_counter += 1
-		if batch_counter == c.config.MaxBatchAmount || MAX_BATCH_BYTES < len([]byte(c.config.CurrentMessage)) {
+		if MAX_BATCH_BYTES < len([]byte(c.config.CurrentMessage+new_bet)) {
+			c.sulprus_message = new_bet
 			return
 		}
+		c.config.CurrentMessage += new_bet
+		batch_counter += 1
+		if batch_counter == c.config.MaxBatchAmount {
+			return
+		}
+
 	}
 }
-
 func (c *Client) send_message(msgID int) bool {
 	err := c.conn.send_message(c.config.CurrentMessage)
 
