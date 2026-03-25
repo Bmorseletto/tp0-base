@@ -35,16 +35,18 @@ type ClientConfig struct {
 
 // Client Entity that encapsulates how
 type Client struct {
-	config ClientConfig
-	conn   *CommModule
+	config          ClientConfig
+	conn            *CommModule
+	sulprus_message string
 }
 
 // NewClient Initializes a new client receiving the configuration
 // as a parameter
 func NewClient(config ClientConfig) *Client {
 	client := &Client{
-		config: config,
-		conn:   NewModule(),
+		config:          config,
+		conn:            NewModule(),
+		sulprus_message: "",
 	}
 	return client
 }
@@ -80,7 +82,7 @@ func (c *Client) StartClientLoop() {
 	}
 	scanner := bufio.NewScanner(f)
 	scanner.Split(bufio.ScanLines)
-	for batch := 1; batch <= c.config.LoopAmount; batch++ {
+	for batch := 1; batch <= c.config.LoopAmount && c.sulprus_message != ""; batch++ {
 		// Create the connection the server in every loop iteration. Send an
 		select {
 		case <-ctx.Done():
@@ -101,11 +103,15 @@ func (c *Client) StartClientLoop() {
 }
 
 func (c *Client) prepare_message(scanner *bufio.Scanner) {
+	if c.sulprus_message != "" {
+		c.config.CurrentMessage += c.sulprus_message
+		c.sulprus_message = ""
+	}
 	batch_counter := 0
 	for scanner.Scan() {
 		line := scanner.Text()
 		bet_data := strings.Split(line, ",")
-		c.config.CurrentMessage += fmt.Sprintf(
+		new_bet := fmt.Sprintf(
 			"Client:%s|Name:%s|LastName:%s|Dni:%v|Birthdate:%s|Number:%v\n",
 			c.config.ID,
 			bet_data[NAME],
@@ -114,10 +120,16 @@ func (c *Client) prepare_message(scanner *bufio.Scanner) {
 			bet_data[BIRTHDATE],
 			bet_data[NUMBER],
 		)
-		batch_counter += 1
-		if batch_counter == c.config.MaxBatchAmount || MAX_BATCH_BYTES < len([]byte(c.config.CurrentMessage)) {
+		if MAX_BATCH_BYTES < len([]byte(c.config.CurrentMessage+new_bet)) {
+			c.sulprus_message = new_bet
 			return
 		}
+		c.config.CurrentMessage += new_bet
+		batch_counter += 1
+		if batch_counter == c.config.MaxBatchAmount {
+			return
+		}
+
 	}
 }
 
