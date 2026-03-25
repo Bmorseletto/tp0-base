@@ -82,7 +82,7 @@ func (c *Client) StartClientLoop() {
 	}
 	scanner := bufio.NewScanner(f)
 	scanner.Split(bufio.ScanLines)
-	for batch := 1; batch <= c.config.LoopAmount && c.sulprus_message != ""; batch++ {
+	for batch := 1; batch <= c.config.LoopAmount || c.sulprus_message != ""; batch++ {
 		// Create the connection the server in every loop iteration. Send an
 		select {
 		case <-ctx.Done():
